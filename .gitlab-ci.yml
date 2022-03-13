@@ -1,0 +1,62 @@
+# Robert Smith -- Check Lab 9 Code Ouputs
+
+stages:
+    - setup
+    - build
+    - test
+
+check-file-structure:
+    stage: setup
+    tags:
+        - ugrad
+    script:
+        - test -d Lab9
+        - test -d Lab9/threads
+        - test -d Lab9/pool
+        - test -f Lab9/threads/threads.c
+        - test -f Lab9/threads/threads.h
+        - test -f Lab9/threads/safe.c
+        - test -f Lab9/threads/safe.h
+        - test -f Lab9/threads/unsafe.c
+        - test -f Lab9/threads/unsafe.c
+        - test -f Lab9/threads/Makefile
+        - test -f Lab9/pool/pool.c
+        - test -f Lab9/pool/pool.h
+        - test -f Lab9/pool/Makefile
+
+run-threads:
+    stage: test
+    tags:
+        - ugrad
+    script:
+        - cp CI/objects/threads/* Lab9/threads/
+        - cd Lab9/threads/
+        - rm -f threads safe unsafe
+        - make
+        - test -f threads
+        - test -f safe
+        - test -f unsafe
+        - ./threads 1
+        - ./threads 2
+        - ./threads 3
+        - ./threads 4
+        - ./threads 5
+        - ./threads 6
+        - ./threads 7
+        - ./threads 8
+        - ./safe > safe_out
+        - ./unsafe > unsafe_out
+        - ../../CI/compare-thread-outputs.sh
+
+run-pool:
+    stage: test
+    tags:
+        - ugrad
+    script:
+        - cp CI/objects/pool/* Lab9/pool/
+        - cd Lab9/pool/
+        - rm -f pool
+        - make
+        - test -f pool
+        - ./pool > pool_out
+        - ../../CI/compare-pool-outputs.sh
