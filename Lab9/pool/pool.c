@@ -37,7 +37,7 @@ bool read_operations(char* filePath, Queue* queue)
   //Read in operations
   for(int i = 0; i < 10000; i++)
   {
-    Operation *operation;
+    Operation *operation = malloc(sizeof(Operation));
 
     int op = -1;
 
