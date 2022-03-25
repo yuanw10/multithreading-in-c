@@ -18,7 +18,7 @@ check-file-structure:
         - test -f Lab9/threads/safe.c
         - test -f Lab9/threads/safe.h
         - test -f Lab9/threads/unsafe.c
-        - test -f Lab9/threads/unsafe.c
+        - test -f Lab9/threads/unsafe.h
         - test -f Lab9/threads/Makefile
         - test -f Lab9/pool/pool.c
         - test -f Lab9/pool/pool.h
