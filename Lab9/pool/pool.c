@@ -84,8 +84,8 @@ ArrayList* execute_thread_pool(char* filePath, int poolSize)
     //Add the thread and corresponding args to the lists
     void* tPtr = &thread;
     void* aPtr = &arg;
-    alist_add_at(pool, i, tPtr);
-    alist_add_at(args, i, aPtr);
+    alist_add(pool, tPtr);
+    alist_add(args, aPtr);
 
     //Create a thread
     pthread_create(&thread, NULL, compute, &arg);
@@ -111,16 +111,15 @@ ArrayList* execute_thread_pool(char* filePath, int poolSize)
 	//Put the result to the list
         alist_add(values, result);
 
-	//Create new Args with operation data on the queue
-        Args newAr;
-        newAr.is_complet = false;
-        newAr.operation = (Operation*)queue_dequeue(opQueue);
-        alist_add_at(args, i, &newAr);
+	//Update args with operation data on the queue
+        ar.is_complet = false;
+        ar.operation = (Operation*)queue_dequeue(opQueue);
 
 	//Create new thread
-        pthread_t thread;
-        alist_add_at(pool, i, &thread);
-        pthread_create(&thread, NULL, compute, alist_get(args,i));
+        alist_remove(pool, i);
+        pthread_t newThread;
+	alist_add_at(pool, i, &newThread);
+        pthread_create(&newThread, NULL, compute, alist_get(args,i));
       }
     }
   }
@@ -153,7 +152,7 @@ int compare(void* x, void* y)
 
 void print(void* x)
 {
-  printf ("%d ", *((int*)x));
+  printf ("%d\n", *((int*)x));
 }
 
 int add(int x, int y)

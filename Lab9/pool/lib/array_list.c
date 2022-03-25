@@ -149,6 +149,9 @@ void* alist_remove(ArrayList* list, int index)
   //Decrease the current size
   list->size--;
   
+  //Erase the value at the end of the list
+  list->arr[list->size] = NULL;
+
   return elem;
 }
 
