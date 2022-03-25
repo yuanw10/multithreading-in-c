@@ -145,7 +145,7 @@ void print_sorted(ArrayList* list)
 
 
 //Helper functions
-/*
+
 int compare(void* x, void* y)
 {
   return *((int*)y) - *((int*)x);
@@ -155,7 +155,7 @@ void print(void* x)
 {
   printf ("%d ", *((int*)x));
 }
-*/
+
 int add(int x, int y)
 {
   return x + y;
