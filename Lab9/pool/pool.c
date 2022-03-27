@@ -21,15 +21,17 @@ void* compute(void* args)
   arg->is_complet = true;
 
   //Casting and return
-  void* value = &result;
-  return value;
+  int* value = malloc(sizeof(int));
+  *value = result;
+
+  return (void*)value;
 }
 
 bool read_operations(char* filePath, Queue* queue)
 {
   //Read from the file path
-  FILE* filePtr = fopen(filePath,"r");
-  
+//  FILE* filePtr = fopen(filePath,"r");
+  FILE *filePtr = fopen("../../CI/objects/pool/operation_list","r");
   //Check if the queue or the file path can be found
   if(queue == NULL || filePath == NULL || filePtr == NULL)
     return false;
@@ -53,7 +55,6 @@ bool read_operations(char* filePath, Queue* queue)
     if(op == 2)
       operation -> op = mul;
 
-   
     //Enqueue the operation
     queue_enqueue(queue, operation);
   }
@@ -66,63 +67,53 @@ bool read_operations(char* filePath, Queue* queue)
 ArrayList* execute_thread_pool(char* filePath, int poolSize)
 {
   //Create a thread pool and a list containing Args
-  ArrayList* pool = alist_initialize(poolSize, sizeof(pthread_t), "thread");
+  pthread_t pool[poolSize];
   ArrayList* args = alist_initialize(poolSize, sizeof(Args), "args");
 
   //Create the operation queue and read in data from the file
   Queue* opQueue = queue_initialize(sizeof(Operation),"Operation");
   read_operations(filePath, opQueue);
 
-  //Create threads for the pool
+  //Create an Arg and store it on its list
   for(int i = 0; i < poolSize && queue_size(opQueue) != 0; i++)
   {
-    pthread_t thread;
 
     //Create Args with operation on the queue
     Args* arg = malloc(sizeof(Args));
     arg->is_complet = false;
     arg->operation = (Operation*)queue_dequeue(opQueue);
 
-    //Add the thread and corresponding args to the lists
-    void* tPtr = &thread;
-    alist_add_at(pool, i, tPtr);
+    //Add the Args to the list
     alist_add_at(args, i, arg);
-
-    //Create a thread
-    pthread_create(&thread, NULL, compute, arg);
   }
   
   //Create a list to store the computing results
   ArrayList* values = alist_initialize(10000, sizeof(int), "int");
 
-  //Dequeue the operation queue until it is empty
+  //Implement the operations until all are done
   while(values->size < 10000)
   {
     for(int i = 0; i < poolSize; i++)
     {
-      //If the computing is done
+      //Get the args and create a thread for it
       Args* ar = alist_get(args,i);
+      pthread_create(&pool[i], NULL, compute, (void*)ar);
 
+      //If the computing is done
       if(ar->is_complet)
       { 
 	//Retrieve the computing result
 	int *result = NULL;
-        pthread_join(*(pthread_t*)alist_get(pool,i), (void**) &result);
-	
+        pthread_join(pool[i], (void**) &result);
+
 	//Put the result on the list
         alist_add(values, (void*)result);
+	free(result);
 
 	//Update args with operation data on the queue
         ar->is_complet = false;
 	if(queue_size(opQueue) > 0)
           ar->operation = (Operation*)queue_dequeue(opQueue);
-
-	//Create new thread
-        alist_remove(pool, i);
-        pthread_t newThread;
-	void* tPtr = &newThread;
-	alist_add_at(pool, i, tPtr);
-        pthread_create(&newThread, NULL, compute, alist_get(args,i));
       }
     }
   }
@@ -177,4 +168,3 @@ int mul(int x, int y)
 {
   return x * y;
 }
-

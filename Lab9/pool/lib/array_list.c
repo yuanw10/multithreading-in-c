@@ -16,7 +16,7 @@ ArrayList* alist_initialize(int maxNum, int typeSize, char* typeName)
   list -> maxSize = maxNum;
   list -> itemSize = typeSize;
 
-  list -> type = malloc(sizeof(char) * strlen(typeName));
+  list -> type = malloc((strlen(typeName) + 1));
   strcpy(list -> type, typeName);
 
   list -> size = 0;
