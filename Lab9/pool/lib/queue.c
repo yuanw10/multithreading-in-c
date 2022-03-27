@@ -1,6 +1,6 @@
 //The code is from previous labs that I wrote
 //Author: me - Yuan Wang
-//Date accessed: March 24, 2022
+//Date accessed: March 27, 2022
 
 
 #include "queue.h"
@@ -16,8 +16,8 @@ Queue* queue_initialize(int typeSize , char* typeName)
   Queue* queue = malloc(sizeof(queue));
 
 
-  //Create a list inside the queue, set max size as 10000
-  queue -> list = alist_initialize (10000, typeSize, typeName);
+  //Create a list inside the queue, set max size as 100
+  queue -> list = alist_initialize (100, typeSize, typeName);
 
   return queue;
 }

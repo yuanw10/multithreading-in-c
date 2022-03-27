@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "array_list.h"
-#include "bintree.h"
+#include "heap.h"
 #include "queue.h"
 
 

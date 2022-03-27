@@ -5,20 +5,20 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "array_list.h"
-#include "bintree.h"
+#include "heap.h"
 #include "queue.h"
 
-void* compute(void* arg)
+void* compute(void* args)
 {
   //Casting
-  Args args = *(Args*)(arg);
+  Args* arg = args;
 
   //Get the computing result
-  Operation* opPtr = args.operation;
+  Operation* opPtr = arg->operation;
   int result = opPtr->op(opPtr->a, opPtr->b);
 
-  //Computing cmpleted
-  args.is_complet = true;
+  //Computing completed
+  arg->is_complet = true;
 
   //Casting and return
   void* value = &result;
@@ -28,13 +28,13 @@ void* compute(void* arg)
 bool read_operations(char* filePath, Queue* queue)
 {
   //Read from the file path
-  FILE *filePtr = fopen(filePath,"r");
-
+  FILE* filePtr = fopen(filePath,"r");
+  
   //Check if the queue or the file path can be found
   if(queue == NULL || filePath == NULL || filePtr == NULL)
     return false;
   
-  //Read in operations
+  //Read in 10000 operations
   for(int i = 0; i < 10000; i++)
   {
     Operation *operation = malloc(sizeof(Operation));
@@ -53,10 +53,12 @@ bool read_operations(char* filePath, Queue* queue)
     if(op == 2)
       operation -> op = mul;
 
+   
     //Enqueue the operation
     queue_enqueue(queue, operation);
   }
 
+  fclose(filePtr);
   return true;
 }
 
@@ -70,55 +72,56 @@ ArrayList* execute_thread_pool(char* filePath, int poolSize)
   //Create the operation queue and read in data from the file
   Queue* opQueue = queue_initialize(sizeof(Operation),"Operation");
   read_operations(filePath, opQueue);
-  
+
   //Create threads for the pool
   for(int i = 0; i < poolSize && queue_size(opQueue) != 0; i++)
   {
     pthread_t thread;
 
     //Create Args with operation on the queue
-    Args arg;
-    arg.is_complet = false;
-    arg.operation = (Operation*)queue_dequeue(opQueue);
-    
+    Args* arg = malloc(sizeof(Args));
+    arg->is_complet = false;
+    arg->operation = (Operation*)queue_dequeue(opQueue);
+
     //Add the thread and corresponding args to the lists
     void* tPtr = &thread;
-    void* aPtr = &arg;
-    alist_add(pool, tPtr);
-    alist_add(args, aPtr);
+    alist_add_at(pool, i, tPtr);
+    alist_add_at(args, i, arg);
 
     //Create a thread
-    pthread_create(&thread, NULL, compute, &arg);
+    pthread_create(&thread, NULL, compute, arg);
   }
   
   //Create a list to store the computing results
   ArrayList* values = alist_initialize(10000, sizeof(int), "int");
 
-
   //Dequeue the operation queue until it is empty
-  while(queue_size(opQueue) != 0)
+  while(values->size < 10000)
   {
     for(int i = 0; i < poolSize; i++)
     {
       //If the computing is done
-      Args ar = *(Args*)(alist_get(args,i));
-      if(ar.is_complet)
+      Args* ar = alist_get(args,i);
+
+      if(ar->is_complet)
       { 
 	//Retrieve the computing result
 	int *result = NULL;
         pthread_join(*(pthread_t*)alist_get(pool,i), (void**) &result);
-
-	//Put the result to the list
-        alist_add(values, result);
+	
+	//Put the result on the list
+        alist_add(values, (void*)result);
 
 	//Update args with operation data on the queue
-        ar.is_complet = false;
-        ar.operation = (Operation*)queue_dequeue(opQueue);
+        ar->is_complet = false;
+	if(queue_size(opQueue) > 0)
+          ar->operation = (Operation*)queue_dequeue(opQueue);
 
 	//Create new thread
         alist_remove(pool, i);
         pthread_t newThread;
-	alist_add_at(pool, i, &newThread);
+	void* tPtr = &newThread;
+	alist_add_at(pool, i, tPtr);
         pthread_create(&newThread, NULL, compute, alist_get(args,i));
       }
     }
@@ -129,17 +132,22 @@ ArrayList* execute_thread_pool(char* filePath, int poolSize)
 
 void print_sorted(ArrayList* list)
 {
-  //Use binary tree to store the values
-  BinaryTree *btree = bintree_initialize(sizeof(int), "int", compare, print);
 
-  //Use the results to create a binary tree
+  //Create a heap to sort the list from smallest to largest
+  Heap* heap = heap_initialize(sizeof(int), "int", compare, print);
+
+  //Insert elements on the list to the heap in order
   for(int i = 0; i < list -> size; i++)
   {
-    bintree_insert(btree, alist_get(list,i));
+    heap_insert(heap, alist_get(list, i));
   }
 
-  //Print the tree in-order (smallest to largest)
-  bintree_print_in_order(btree);
+  //Print out the elements in order
+  while(heap_size(heap) > 0)
+  {
+    print(heap_remove(heap));
+  }
+
 }
 
 
