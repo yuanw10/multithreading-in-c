@@ -30,8 +30,8 @@ void* compute(void* args)
 bool read_operations(char* filePath, Queue* queue)
 {
   //Read from the file path
-//  FILE* filePtr = fopen(filePath,"r");
-  FILE *filePtr = fopen("../../CI/objects/pool/operation_list","r");
+  FILE* filePtr = fopen(filePath,"r");
+
   //Check if the queue or the file path can be found
   if(queue == NULL || filePath == NULL || filePtr == NULL)
     return false;
@@ -85,6 +85,10 @@ ArrayList* execute_thread_pool(char* filePath, int poolSize)
 
     //Add the Args to the list
     alist_add_at(args, i, arg);
+
+    //Create a thread for this Args
+    pthread_create(&pool[i], NULL, compute, arg);
+
   }
   
   //Create a list to store the computing results
@@ -95,12 +99,12 @@ ArrayList* execute_thread_pool(char* filePath, int poolSize)
   {
     for(int i = 0; i < poolSize; i++)
     {
+
       //Get the args and create a thread for it
       Args* ar = alist_get(args,i);
-      pthread_create(&pool[i], NULL, compute, (void*)ar);
 
-      //If the computing is done
-      if(ar->is_complet)
+      //If the computing is done and there are operations left
+      if(ar->is_complet && queue_size(opQueue) > 0)
       { 
 	//Retrieve the computing result
 	int *result = NULL;
@@ -111,9 +115,26 @@ ArrayList* execute_thread_pool(char* filePath, int poolSize)
 	free(result);
 
 	//Update args with operation data on the queue
-        ar->is_complet = false;
-	if(queue_size(opQueue) > 0)
-          ar->operation = (Operation*)queue_dequeue(opQueue);
+	ar->is_complet=false;
+        ar->operation = (Operation*)queue_dequeue(opQueue);
+	
+
+	pthread_create(&pool[i], NULL, compute, (void*)ar);
+      }
+
+      //If the computing is done but no operations left
+      if(ar->is_complet && queue_size(opQueue) == 0)
+      {
+        //Retrieve the computing result
+	int *result = NULL;
+        pthread_join(pool[i], (void**) &result);
+
+	//Put the result on the list
+        alist_add(values, (void*)result);
+	free(result);
+
+	ar->is_complet = false;
+
       }
     }
   }
@@ -168,3 +189,4 @@ int mul(int x, int y)
 {
   return x * y;
 }
+
