@@ -10,7 +10,7 @@ void* fill(void* args)
 {
   Args* arg = args;
 
-  //Squre each value at [start,end)
+  //Square each value at [start,end)
   for(int i = arg->start; i < arg->end - 1; i++)
   {
     arg->arr[i] *= arg->arr[i];
@@ -22,6 +22,7 @@ void* fill(void* args)
   sem_post(&semaphore);
 
   return NULL;
+
 }
 
 void fill_memory(int* array, int threadNum)
@@ -56,10 +57,6 @@ void fill_memory(int* array, int threadNum)
     //Create a thread to calculate
     pthread_create(&thread[i], NULL, fill, &args);
 
-  }
-
-  for(int i = 0; i < threadNum; i++)
-  {
     pthread_join(thread[i], NULL);
 
   }
