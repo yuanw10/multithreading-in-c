@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 typedef struct _Args
 {
@@ -14,6 +15,7 @@ typedef struct _Args
   int end;
 } Args;
 
+sem_t semaphore;
 
 void* fill(void*);
 void fill_memory(int*, int);
